@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fathom
+  namespace: fathom
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: fathom
+  template:
+    metadata:
+      labels:
+        app: fathom
+    spec:
+      containers:
+      - name: fathom
+        image: usefathom/fathom:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: FATHOM_SERVER_ADDR
+          value: ":8080"
+        - name: FATHOM_GZIP
+          value: "true"
+        - name: FATHOM_DEBUG
+          value: "false"
+        - name: FATHOM_DATABASE_DRIVER
+          value: "mysql"
+        - name: FATHOM_DATABASE_NAME
+          valueFrom:
+            secretKeyRef:
+              name: fathom-secrets
+              key: db_name
+        - name: FATHOM_DATABASE_USER
+          valueFrom:
+            secretKeyRef:
+              name: fathom-secrets
+              key: db_user
+        - name: FATHOM_DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: fathom-secrets
+              key: db_password
+        - name: FATHOM_DATABASE_HOST
+          valueFrom:
+            secretKeyRef:
+              name: fathom-secrets
+              key: db_host
+        - name: FATHOM_DATABASE_SSLMODE
+          valueFrom:
+            secretKeyRef:
+              name: fathom-secrets
+              key: db_ssl_mode
+        - name: FATHOM_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: fathom-secrets
+              key: secret
+        securityContext:
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+        readinessProbe:
+          httpGet:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 7
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 15
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 60"]

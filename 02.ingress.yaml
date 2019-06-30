@@ -1,0 +1,26 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: fathom-ingress
+  namespace: fathom
+spec:
+  tls:
+  - hosts:
+    - track.weeklytechie.com
+    - track.stirichina.ro
+    secretName: fathom-tls
+  rules:
+  - host: track.weeklytechie.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: fathom-svc
+          servicePort: 80
+  - host: track.stirichina.ro
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: fathom-svc
+          servicePort: 80
